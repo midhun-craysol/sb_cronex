@@ -1,0 +1,26 @@
+[
+    {
+        "url": "https://www.google.com",
+        "method": "POST",
+        "CallIntervalSeconds": 180,
+        "FailReryIntervalSeconds": 20,
+        "SkipCallOnFailCount": 5,
+        "TimeoutSeconds": 15
+    },
+    {
+        "url": "https://dns.google/resolve?name=google.com&type=A",
+        "method": "GET",
+        "CallIntervalSeconds": 60,
+        "FailReryIntervalSeconds": 10,
+        "SkipCallOnFailCount": 5,
+        "TimeoutSeconds": 45
+    },
+    {
+        "url": "http://notexist123456789.test",
+        "method": "GET",
+        "CallIntervalSeconds": 120,
+        "FailReryIntervalSeconds": 15,
+        "SkipCallOnFailCount": 5,
+        "TimeoutSeconds": 30
+    }
+]
