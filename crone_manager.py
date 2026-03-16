@@ -6,12 +6,16 @@ import socket
 from datetime import datetime, timedelta
 import urllib.request
 from urllib.error import URLError
-
+from colorama import init,Fore,Style
+init(autoreset=True)
 CONFIG_FILE = "crone.json"
 
-def log(msg):
+def log(msg,color=None):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"{ts} : {msg}", flush=True)
+    if color:
+        print(f"{ts} : {color}{msg}{Style.RESET_ALL}", flush=True)
+    else:
+        print(f"{ts} : {msg}", flush=True)
 
 def create_default_config():
     with open(CONFIG_FILE, "w") as f:
@@ -36,7 +40,7 @@ def load_config():
 def call_url(url, method="GET",timeout=30):
     req = urllib.request.Request(url=url, method=method)
     with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return resp.status
+        return resp
 
 def cron_worker(thread_id, cfg):
     url = cfg.get("url")
@@ -56,15 +60,17 @@ def cron_worker(thread_id, cfg):
         log(f"Thread {thread_id} : Attempt {attempt}")
         log(f"Thread {thread_id} : Calling URL {attempt} - {url}")
         try:
-            status = call_url(url, method, timeout)
-            log(f"Thread {thread_id} : Call OK (HTTP({status}))")
+            response_obj = call_url(url, method, timeout)
+            status_code = response_obj.status       
+            reason = response_obj.reason        
+            log(f"Thread {thread_id} : Call OK (HTTP {status_code} ) ",Fore.GREEN)
             fail_attempts = 0
             next_call = datetime.now() + timedelta(seconds=interval)
             log(f"Thread {thread_id} : Next Call at {next_call.strftime('%Y-%m-%d %H:%M:%S')}")
             time.sleep(interval)
         except socket.timeout:
             fail_attempts += 1
-            log(f"Thread {thread_id} : Request timed out after {timeout} seconds")
+            log(f"Thread {thread_id} : Request timed out after {timeout} seconds",Fore.YELLOW)
             if fail_attempts <= skip_count:
                 log(f"Thread {thread_id} : Waiting {fail_retry} seconds before retry")
                 time.sleep(fail_retry)
@@ -73,20 +79,20 @@ def cron_worker(thread_id, cfg):
                 fail_attempts = 0
                 attempt = 0
                 time.sleep(interval)
-        except URLError as e:
-            fail_attempts += 1
-            log(f"Thread {thread_id} : URL Error , {e.reason}")
-            if fail_attempts <= skip_count:
-                log(f"Thread {thread_id} : Waiting {fail_retry} seconds before retry")
-                time.sleep(fail_retry)
-            else:
-                log(f"Thread {thread_id} : Skipping Call")
-                fail_attempts = 0
-                attempt = 0
-                time.sleep(interval)
+        # except URLError as e:
+        #     fail_attempts += 1
+        #     log(f"Thread {thread_id} : URL Error , {e.reason}")
+        #     if fail_attempts <= skip_count:
+        #         log(f"Thread {thread_id} : Waiting {fail_retry} seconds before retry")
+        #         time.sleep(fail_retry)
+        #     else:
+        #         log(f"Thread {thread_id} : Skipping Call")
+        #         fail_attempts = 0
+        #         attempt = 0
+        #         time.sleep(interval)
         except Exception as e:
             fail_attempts += 1
-            log(f"Thread {thread_id} : Call Fail , {e}")
+            log(f"Thread {thread_id} : Call Fail , {e.reason}",Fore.RED)
             if fail_attempts <= skip_count:
                 log(f"Thread {thread_id} : Waiting {fail_retry} seconds before retry")
                 time.sleep(fail_retry)
