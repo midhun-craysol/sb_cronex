@@ -17,15 +17,11 @@ def log(msg,color=None):
     else:
         print(f"{ts} : {msg}", flush=True)
 
-def create_default_config():
-    with open(CONFIG_FILE, "w") as f:
-        json.dump([], f)
-    log("Program Started")
-    log("Config File missing - Config File Created")
 
 def load_config():
     if not os.path.exists(CONFIG_FILE):
-        create_default_config()
+        log("Config file not found.Stopping the program.",Fore.RED)
+        return None
     log("Config File Found")
     log("Reading Config file")
     try:
@@ -120,9 +116,9 @@ def start_threads(configs):
 def main():
     configs = load_config()
     if not configs:
-        log("No URLs to process. Exiting.")
+        log("No URLs to process. Exiting.",Fore.RED)
         return
     start_threads(configs)
-
+    
 if __name__ == "__main__":
     main()
